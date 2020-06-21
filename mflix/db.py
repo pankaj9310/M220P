@@ -14,7 +14,7 @@ from werkzeug.local import LocalProxy
 
 from pymongo import MongoClient, DESCENDING, ASCENDING
 from pymongo.write_concern import WriteConcern
-from pymongo.errors import DuplicateKeyError, OperationFailure
+from pymongo.errors import DuplicateKeyError, OperationFailure, InvalidId
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
 from pymongo.read_concern import ReadConcern
@@ -45,11 +45,14 @@ def get_db():
 
         db = g._database = MongoClient(
         MFLIX_DB_URI,
+        maxPoolSize=50,
+        wtimeout=2500
         # TODO: Connection Pooling
         # Set the maximum connection pool size to 50 active connections.
         # TODO: Timeouts
         # Set the write timeout limit to 2500 milliseconds.
         )[MFLIX_DB_NAME]
+        # db.max_pool_size = 50
     return db
 
 
@@ -292,7 +295,7 @@ def get_movie(id):
 
     # TODO: Error Handling
     # If an invalid ID is passed to `get_movie`, it should return None.
-    except (StopIteration) as _:
+    except (StopIteration, InvalidId) as e:
 
         """
         Ticket: Error Handling
@@ -305,7 +308,7 @@ def get_movie(id):
         return None
 
     except Exception as e:
-        return {}
+        return None
 
 
 def get_all_genres():
